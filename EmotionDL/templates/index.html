@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EmoSense AI — Deep Emotion Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- Neural Network Background Canvas -->
+<canvas id="neuralCanvas"></canvas>
+
+<!-- Noise Overlay -->
+<div class="noise-overlay"></div>
+
+<div class="app-shell">
+
+  <!-- ── HEADER ─────────────────────────────────────────── -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-mark">
+        <span class="pulse-ring"></span>
+        <svg viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="6" fill="currentColor" opacity="0.9"/>
+          <path d="M4 16 Q10 4 16 16 Q22 28 28 16" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="brand">EmoSense</span>
+        <span class="tag">Deep Emotion AI</span>
+      </div>
+    </div>
+
+    <nav class="nav-pills">
+      <button class="pill active" data-tab="analyze">Analyze</button>
+      <button class="pill" data-tab="about">Architecture</button>
+    </nav>
+
+    <div class="model-badge" id="modelBadge">
+      <span class="dot"></span>
+      <span id="modelStatus">Loading…</span>
+    </div>
+  </header>
+
+  <!-- ── MAIN CONTENT ───────────────────────────────────── -->
+  <main class="main">
+
+    <!-- TAB: Analyze -->
+    <section class="tab-pane active" id="tab-analyze">
+
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-text">
+          <h1>Speech Emotion<br><em>Intelligence</em></h1>
+          <p class="subtitle">1D CNN · BiLSTM · Attention · 8 Emotions · Real-time Analysis</p>
+        </div>
+        <div class="emotion-wheel" id="emotionWheel">
+          <div class="wheel-center">
+            <span id="wheelEmoji">🎙</span>
+          </div>
+          <div class="wheel-segments" id="wheelSegments"></div>
+        </div>
+      </div>
+
+      <!-- Upload Zone -->
+      <div class="upload-section">
+        <form id="uploadForm" enctype="multipart/form-data">
+          <div class="drop-zone" id="dropZone">
+            <div class="drop-inner">
+              <div class="mic-icon">
+                <svg viewBox="0 0 48 48" fill="none">
+                  <rect x="18" y="4" width="12" height="24" rx="6" fill="currentColor"/>
+                  <path d="M10 22c0 7.732 6.268 14 14 14s14-6.268 14-14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                  <line x1="24" y1="36" x2="24" y2="44" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <line x1="16" y1="44" x2="32" y2="44" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="drop-text">
+                <strong>Drop audio file here</strong>
+                <span>or click to browse</span>
+                <small>WAV · MP3 · FLAC · OGG · M4A</small>
+              </div>
+              <input type="file" id="audioInput" name="audio" accept=".wav,.mp3,.flac,.ogg,.m4a" required hidden/>
+            </div>
+
+            <!-- File selected state -->
+            <div class="file-selected" id="fileSelected" hidden>
+              <div class="file-info">
+                <svg viewBox="0 0 24 24" fill="none" class="file-icon">
+                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div>
+                  <span id="fileName" class="file-name">–</span>
+                  <span id="fileSize" class="file-size">–</span>
+                </div>
+              </div>
+              <button type="button" class="clear-btn" id="clearFile">✕</button>
+            </div>
+          </div>
+
+          <button type="submit" class="analyze-btn" id="analyzeBtn" disabled>
+            <span class="btn-text">Analyze Emotion</span>
+            <span class="btn-icon">→</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-state" id="loadingState" hidden>
+        <div class="neural-spinner">
+          <div class="spinner-ring r1"></div>
+          <div class="spinner-ring r2"></div>
+          <div class="spinner-ring r3"></div>
+          <div class="spinner-core">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+          </div>
+        </div>
+        <div class="loading-steps">
+          <div class="step active" id="step1">Extracting MFCC features</div>
+          <div class="step" id="step2">Running CNN layers</div>
+          <div class="step" id="step3">BiLSTM + Attention analysis</div>
+          <div class="step" id="step4">Classifying emotion</div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="results-panel" id="resultsPanel" hidden>
+
+        <!-- Primary Result -->
+        <div class="primary-result" id="primaryResult">
+          <div class="result-emotion">
+            <div class="result-emoji" id="resultEmoji">😄</div>
+            <div class="result-info">
+              <h2 class="result-label" id="resultLabel">HAPPY</h2>
+              <div class="confidence-bar-wrap">
+                <div class="confidence-bar">
+                  <div class="confidence-fill" id="confidenceFill" style="width:0%"></div>
+                </div>
+                <span class="confidence-val" id="confidenceVal">0%</span>
+              </div>
+              <p class="result-desc" id="resultDesc">–</p>
+            </div>
+          </div>
+          <div class="audio-stats" id="audioStats">
+            <div class="stat-chip"><span class="stat-label">Duration</span><span class="stat-val" id="statDuration">–</span></div>
+            <div class="stat-chip"><span class="stat-label">Pitch</span><span class="stat-val" id="statPitch">–</span></div>
+            <div class="stat-chip"><span class="stat-label">Energy</span><span class="stat-val" id="statEnergy">–</span></div>
+            <div class="stat-chip"><span class="stat-label">ZCR</span><span class="stat-val" id="statZcr">–</span></div>
+          </div>
+        </div>
+
+        <!-- Waveform -->
+        <div class="waveform-section">
+          <div class="section-label">Waveform</div>
+          <canvas id="waveformCanvas" height="60"></canvas>
+        </div>
+
+        <!-- All Emotion Probabilities -->
+        <div class="probs-section">
+          <div class="section-label">Emotion Probability Distribution</div>
+          <div class="prob-bars" id="probBars"></div>
+        </div>
+
+        <button class="reset-btn" id="resetBtn">Analyze Another →</button>
+      </div>
+
+    </section><!-- /tab-analyze -->
+
+    <!-- TAB: Architecture -->
+    <section class="tab-pane" id="tab-about">
+      <div class="arch-page">
+        <h2 class="arch-title">Deep Learning Architecture</h2>
+        <p class="arch-subtitle">How EmoSense processes your voice</p>
+
+        <div class="pipeline">
+          <div class="pipe-step">
+            <div class="pipe-icon">🎙</div>
+            <div class="pipe-name">Audio Input</div>
+            <div class="pipe-detail">WAV/MP3/FLAC<br>3 seconds @ 22kHz</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">
+            <div class="pipe-icon">📊</div>
+            <div class="pipe-name">Feature Extraction</div>
+            <div class="pipe-detail">MFCC × 40<br>Delta MFCC<br>Chroma · Mel · ZCR · RMS<br>Spectral features</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step highlight">
+            <div class="pipe-icon">🧠</div>
+            <div class="pipe-name">1D CNN</div>
+            <div class="pipe-detail">Conv1D 64→128→256<br>BatchNorm + ReLU<br>MaxPool × 2</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step highlight">
+            <div class="pipe-icon">🔄</div>
+            <div class="pipe-name">BiLSTM</div>
+            <div class="pipe-detail">2 Layers<br>128 hidden × 2 directions<br>Sequence modeling</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step highlight">
+            <div class="pipe-icon">👁</div>
+            <div class="pipe-name">Attention</div>
+            <div class="pipe-detail">Temporal attention<br>Focus on key moments<br>Context pooling</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">
+            <div class="pipe-icon">🎯</div>
+            <div class="pipe-name">Classifier</div>
+            <div class="pipe-detail">FC 256→128→64→8<br>Softmax output<br>8 emotions</div>
+          </div>
+        </div>
+
+        <div class="emotions-grid">
+          <h3>8 Detectable Emotions</h3>
+          <div class="emotion-cards">
+            <div class="em-card" style="--c:#64748b">😐 Neutral</div>
+            <div class="em-card" style="--c:#0ea5e9">😌 Calm</div>
+            <div class="em-card" style="--c:#f59e0b">😄 Happy</div>
+            <div class="em-card" style="--c:#6366f1">😢 Sad</div>
+            <div class="em-card" style="--c:#ef4444">😡 Angry</div>
+            <div class="em-card" style="--c:#8b5cf6">😨 Fearful</div>
+            <div class="em-card" style="--c:#10b981">🤢 Disgust</div>
+            <div class="em-card" style="--c:#f97316">😲 Surprised</div>
+          </div>
+        </div>
+
+        <div class="dataset-info">
+          <h3>Recommended Dataset</h3>
+          <div class="dataset-card">
+            <div class="ds-name">RAVDESS</div>
+            <div class="ds-desc">Ryerson Audio-Visual Database of Emotional Speech and Song</div>
+            <div class="ds-stats">
+              <span>1440 files</span>
+              <span>24 actors</span>
+              <span>8 emotions</span>
+              <span>2 intensity levels</span>
+            </div>
+            <a href="https://zenodo.org/record/1188976" target="_blank" class="ds-link">Download from Zenodo →</a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Demo mode banner -->
+  <div class="demo-banner" id="demoBanner" hidden>
+    ⚠ Demo mode — Train the DL model first: <code>python train_model.py</code>
+  </div>
+
+</div><!-- /app-shell -->
+
+<script src="/static/js/neural.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
