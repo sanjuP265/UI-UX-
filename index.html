@@ -3,616 +3,258 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NW-DL · Deep Learning Enhanced Sequence Alignment</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+<title>EmoSense AI — Deep Emotion Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
 
-<!-- ─ Animated background canvas ─ -->
-<canvas id="bg-canvas"></canvas>
+<!-- Neural Network Background Canvas -->
+<canvas id="neuralCanvas"></canvas>
 
-<!-- ─ Header ─ -->
-<header>
-  <div class="header-inner">
+<!-- Noise Overlay -->
+<div class="noise-overlay"></div>
+
+<div class="app-shell">
+
+  <!-- ── HEADER ─────────────────────────────────────────── -->
+  <header class="header">
     <div class="logo">
-      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-        <path d="M6 4 C6 4 10 10 18 10 C26 10 30 4 30 4" stroke="#00FFC8" stroke-width="2" stroke-linecap="round" fill="none"/>
-        <path d="M6 12 C6 12 10 18 18 18 C26 18 30 12 30 12" stroke="#00FFC8" stroke-width="2" stroke-linecap="round" fill="none"/>
-        <path d="M6 20 C6 20 10 26 18 26 C26 26 30 20 30 20" stroke="#00FFC8" stroke-width="2" stroke-linecap="round" fill="none"/>
-        <path d="M6 28 C6 28 10 34 18 34 C26 34 30 28 30 28" stroke="#00FFC8" stroke-width="2" stroke-linecap="round" fill="none"/>
-        <line x1="6" y1="4" x2="6" y2="32" stroke="#00FFC8" stroke-width="1.5" opacity="0.5"/>
-        <line x1="30" y1="4" x2="30" y2="32" stroke="#00FFC8" stroke-width="1.5" opacity="0.5"/>
-      </svg>
-      <span>NW<em>–DL</em></span>
+      <div class="logo-mark">
+        <span class="pulse-ring"></span>
+        <svg viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="6" fill="currentColor" opacity="0.9"/>
+          <path d="M4 16 Q10 4 16 16 Q22 28 28 16" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="brand">EmoSense</span>
+        <span class="tag">Deep Emotion AI</span>
+      </div>
     </div>
-    <nav>
-      <button class="nav-btn active" onclick="showTab('align')">Alignment</button>
-      <button class="nav-btn" onclick="showTab('batch')">Batch</button>
-      <button class="nav-btn" onclick="showTab('custom')">Custom</button>
-      <button class="nav-btn" onclick="showTab('dataset')">Dataset</button>
+
+    <nav class="nav-pills">
+      <button class="pill active" data-tab="analyze">Analyze</button>
+      <button class="pill" data-tab="about">Architecture</button>
     </nav>
-    <div class="header-pill" id="dataset-pill">Loading…</div>
-  </div>
-</header>
 
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<!--  TAB: ALIGNMENT                                                    -->
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<main id="tab-align" class="tab active">
-
-  <!-- Hero -->
-  <section class="hero">
-    <p class="overline">Bioinformatics · Deep Learning · Dynamic Programming</p>
-    <h1>Deep Learning Enhanced<br/><span class="accent">Needleman–Wunsch</span></h1>
-    <p class="sub">Adaptive ML scoring replaces static parameters with sequence-aware optimization derived from GC content, k-mer entropy, and compositional complexity — maximising biological accuracy.</p>
-  </section>
-
-  <!-- Controls -->
-  <section class="controls-row">
-    <div class="ctrl-group">
-      <label>Sequence 1</label>
-      <select id="sel1"></select>
+    <div class="model-badge" id="modelBadge">
+      <span class="dot"></span>
+      <span id="modelStatus">Loading…</span>
     </div>
-    <div class="vs-badge">VS</div>
-    <div class="ctrl-group">
-      <label>Sequence 2</label>
-      <select id="sel2"></select>
-    </div>
-    <div class="ctrl-group">
-      <label>Segment length (bp)</label>
-      <input type="range" id="seg-len" min="50" max="400" value="200" step="50"/>
-      <span id="seg-len-val" class="range-val">200 bp</span>
-    </div>
-    <button class="run-btn" id="run-btn" onclick="runAlignment()">
-      <span class="btn-icon">▶</span> Run Alignment
-    </button>
-  </section>
+  </header>
 
-  <!-- Results grid -->
-  <section class="results-grid" id="results-area" style="display:none">
+  <!-- ── MAIN CONTENT ───────────────────────────────────── -->
+  <main class="main">
 
-    <!-- Score cards row -->
-    <div class="score-row">
-      <div class="score-card classic">
-        <div class="sc-label">Classic NW</div>
-        <div class="sc-score" id="c-score">—</div>
-        <div class="sc-sub">match=1  mismatch=−1  gap=−2</div>
-        <div class="sc-time" id="c-time"></div>
-      </div>
-      <div class="score-card ml">
-        <div class="sc-badge">AI OPTIMISED</div>
-        <div class="sc-label">ML-Enhanced NW</div>
-        <div class="sc-score accent" id="ml-score">—</div>
-        <div class="sc-sub" id="ml-params">Adaptive parameters</div>
-        <div class="sc-time" id="ml-time"></div>
-      </div>
-      <div class="score-card affine">
-        <div class="sc-label">Affine-Gap NW</div>
-        <div class="sc-score" id="aff-score">—</div>
-        <div class="sc-sub">gap_open=−3  gap_ext=−1</div>
-      </div>
-      <div class="score-card improvement-card">
-        <div class="sc-label">Improvement</div>
-        <div class="sc-score accent" id="improv">—</div>
-        <div class="sc-sub">ML vs Classic</div>
-        <div class="improv-bar-wrap"><div class="improv-bar" id="improv-bar"></div></div>
-      </div>
-    </div>
+    <!-- TAB: Analyze -->
+    <section class="tab-pane active" id="tab-analyze">
 
-    <!-- Sequence info row -->
-    <div class="seq-info-row">
-      <div class="seq-info-card" id="seq1-info"></div>
-      <div class="seq-info-card" id="seq2-info"></div>
-    </div>
-
-    <!-- Stats comparison -->
-    <div class="stats-grid">
-      <div class="stat-panel">
-        <div class="panel-title">Classic NW — Alignment Stats</div>
-        <div class="stat-bars" id="c-stats"></div>
-      </div>
-      <div class="stat-panel">
-        <div class="panel-title">ML-Optimised — Alignment Stats</div>
-        <div class="stat-bars" id="ml-stats"></div>
-      </div>
-    </div>
-
-    <!-- ML insight panel -->
-    <div class="insight-panel">
-      <div class="panel-title">ML Scoring Intelligence</div>
-      <div class="insight-grid" id="insight-grid"></div>
-    </div>
-
-    <!-- Alignment viewer -->
-    <div class="alignment-viewer">
-      <div class="panel-title">
-        Alignment Visualisation
-        <div class="aln-tabs">
-          <button class="aln-tab active" onclick="switchAln('ml')">ML-Optimised</button>
-          <button class="aln-tab" onclick="switchAln('classic')">Classic</button>
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-text">
+          <h1>Speech Emotion<br><em>Intelligence</em></h1>
+          <p class="subtitle">1D CNN · BiLSTM · Attention · 8 Emotions · Real-time Analysis</p>
+        </div>
+        <div class="emotion-wheel" id="emotionWheel">
+          <div class="wheel-center">
+            <span id="wheelEmoji">🎙</span>
+          </div>
+          <div class="wheel-segments" id="wheelSegments"></div>
         </div>
       </div>
-      <div class="aln-legend">
-        <span class="leg-match">█ Match</span>
-        <span class="leg-mm">█ Mismatch</span>
-        <span class="leg-gap">█ Gap</span>
+
+      <!-- Upload Zone -->
+      <div class="upload-section">
+        <form id="uploadForm" enctype="multipart/form-data">
+          <div class="drop-zone" id="dropZone">
+            <div class="drop-inner">
+              <div class="mic-icon">
+                <svg viewBox="0 0 48 48" fill="none">
+                  <rect x="18" y="4" width="12" height="24" rx="6" fill="currentColor"/>
+                  <path d="M10 22c0 7.732 6.268 14 14 14s14-6.268 14-14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                  <line x1="24" y1="36" x2="24" y2="44" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <line x1="16" y1="44" x2="32" y2="44" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="drop-text">
+                <strong>Drop audio file here</strong>
+                <span>or click to browse</span>
+                <small>WAV · MP3 · FLAC · OGG · M4A</small>
+              </div>
+              <input type="file" id="audioInput" name="audio" accept=".wav,.mp3,.flac,.ogg,.m4a" required hidden/>
+            </div>
+
+            <!-- File selected state -->
+            <div class="file-selected" id="fileSelected" hidden>
+              <div class="file-info">
+                <svg viewBox="0 0 24 24" fill="none" class="file-icon">
+                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div>
+                  <span id="fileName" class="file-name">–</span>
+                  <span id="fileSize" class="file-size">–</span>
+                </div>
+              </div>
+              <button type="button" class="clear-btn" id="clearFile">✕</button>
+            </div>
+          </div>
+
+          <button type="submit" class="analyze-btn" id="analyzeBtn" disabled>
+            <span class="btn-text">Analyze Emotion</span>
+            <span class="btn-icon">→</span>
+          </button>
+        </form>
       </div>
-      <div class="aln-display" id="aln-display"></div>
-    </div>
 
-  </section>
+      <!-- Loading State -->
+      <div class="loading-state" id="loadingState" hidden>
+        <div class="neural-spinner">
+          <div class="spinner-ring r1"></div>
+          <div class="spinner-ring r2"></div>
+          <div class="spinner-ring r3"></div>
+          <div class="spinner-core">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+          </div>
+        </div>
+        <div class="loading-steps">
+          <div class="step active" id="step1">Extracting MFCC features</div>
+          <div class="step" id="step2">Running CNN layers</div>
+          <div class="step" id="step3">BiLSTM + Attention analysis</div>
+          <div class="step" id="step4">Classifying emotion</div>
+        </div>
+      </div>
 
-  <div class="loading-overlay" id="loading" style="display:none">
-    <div class="loader-ring"></div>
-    <p>Computing alignment…</p>
+      <!-- Results -->
+      <div class="results-panel" id="resultsPanel" hidden>
+
+        <!-- Primary Result -->
+        <div class="primary-result" id="primaryResult">
+          <div class="result-emotion">
+            <div class="result-emoji" id="resultEmoji">😄</div>
+            <div class="result-info">
+              <h2 class="result-label" id="resultLabel">HAPPY</h2>
+              <div class="confidence-bar-wrap">
+                <div class="confidence-bar">
+                  <div class="confidence-fill" id="confidenceFill" style="width:0%"></div>
+                </div>
+                <span class="confidence-val" id="confidenceVal">0%</span>
+              </div>
+              <p class="result-desc" id="resultDesc">–</p>
+            </div>
+          </div>
+          <div class="audio-stats" id="audioStats">
+            <div class="stat-chip"><span class="stat-label">Duration</span><span class="stat-val" id="statDuration">–</span></div>
+            <div class="stat-chip"><span class="stat-label">Pitch</span><span class="stat-val" id="statPitch">–</span></div>
+            <div class="stat-chip"><span class="stat-label">Energy</span><span class="stat-val" id="statEnergy">–</span></div>
+            <div class="stat-chip"><span class="stat-label">ZCR</span><span class="stat-val" id="statZcr">–</span></div>
+          </div>
+        </div>
+
+        <!-- Waveform -->
+        <div class="waveform-section">
+          <div class="section-label">Waveform</div>
+          <canvas id="waveformCanvas" height="60"></canvas>
+        </div>
+
+        <!-- All Emotion Probabilities -->
+        <div class="probs-section">
+          <div class="section-label">Emotion Probability Distribution</div>
+          <div class="prob-bars" id="probBars"></div>
+        </div>
+
+        <button class="reset-btn" id="resetBtn">Analyze Another →</button>
+      </div>
+
+    </section><!-- /tab-analyze -->
+
+    <!-- TAB: Architecture -->
+    <section class="tab-pane" id="tab-about">
+      <div class="arch-page">
+        <h2 class="arch-title">Deep Learning Architecture</h2>
+        <p class="arch-subtitle">How EmoSense processes your voice</p>
+
+        <div class="pipeline">
+          <div class="pipe-step">
+            <div class="pipe-icon">🎙</div>
+            <div class="pipe-name">Audio Input</div>
+            <div class="pipe-detail">WAV/MP3/FLAC<br>3 seconds @ 22kHz</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">
+            <div class="pipe-icon">📊</div>
+            <div class="pipe-name">Feature Extraction</div>
+            <div class="pipe-detail">MFCC × 40<br>Delta MFCC<br>Chroma · Mel · ZCR · RMS<br>Spectral features</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step highlight">
+            <div class="pipe-icon">🧠</div>
+            <div class="pipe-name">1D CNN</div>
+            <div class="pipe-detail">Conv1D 64→128→256<br>BatchNorm + ReLU<br>MaxPool × 2</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step highlight">
+            <div class="pipe-icon">🔄</div>
+            <div class="pipe-name">BiLSTM</div>
+            <div class="pipe-detail">2 Layers<br>128 hidden × 2 directions<br>Sequence modeling</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step highlight">
+            <div class="pipe-icon">👁</div>
+            <div class="pipe-name">Attention</div>
+            <div class="pipe-detail">Temporal attention<br>Focus on key moments<br>Context pooling</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step">
+            <div class="pipe-icon">🎯</div>
+            <div class="pipe-name">Classifier</div>
+            <div class="pipe-detail">FC 256→128→64→8<br>Softmax output<br>8 emotions</div>
+          </div>
+        </div>
+
+        <div class="emotions-grid">
+          <h3>8 Detectable Emotions</h3>
+          <div class="emotion-cards">
+            <div class="em-card" style="--c:#64748b">😐 Neutral</div>
+            <div class="em-card" style="--c:#0ea5e9">😌 Calm</div>
+            <div class="em-card" style="--c:#f59e0b">😄 Happy</div>
+            <div class="em-card" style="--c:#6366f1">😢 Sad</div>
+            <div class="em-card" style="--c:#ef4444">😡 Angry</div>
+            <div class="em-card" style="--c:#8b5cf6">😨 Fearful</div>
+            <div class="em-card" style="--c:#10b981">🤢 Disgust</div>
+            <div class="em-card" style="--c:#f97316">😲 Surprised</div>
+          </div>
+        </div>
+
+        <div class="dataset-info">
+          <h3>Recommended Dataset</h3>
+          <div class="dataset-card">
+            <div class="ds-name">RAVDESS</div>
+            <div class="ds-desc">Ryerson Audio-Visual Database of Emotional Speech and Song</div>
+            <div class="ds-stats">
+              <span>1440 files</span>
+              <span>24 actors</span>
+              <span>8 emotions</span>
+              <span>2 intensity levels</span>
+            </div>
+            <a href="https://zenodo.org/record/1188976" target="_blank" class="ds-link">Download from Zenodo →</a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Demo mode banner -->
+  <div class="demo-banner" id="demoBanner" hidden>
+    ⚠ Demo mode — Train the DL model first: <code>python train_model.py</code>
   </div>
-</main>
 
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<!--  TAB: BATCH                                                        -->
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<main id="tab-batch" class="tab">
-  <section class="hero">
-    <p class="overline">Pairwise Comparison</p>
-    <h1>Batch <span class="accent">Alignment Matrix</span></h1>
-    <p class="sub">All pairwise alignments between the first 6 sequences — compare Classic, ML-Enhanced, and Affine-Gap scores side by side.</p>
-  </section>
-  <div class="batch-controls">
-    <button class="run-btn" onclick="runBatch()">▶ Run Batch Analysis</button>
-    <span style="color:var(--muted);font-family:var(--mono);font-size:13px">Uses first 6 sequences · 120bp segments</span>
-  </div>
-  <div id="batch-results" class="batch-table-wrap" style="display:none"></div>
-  <div class="loading-overlay" id="batch-loading" style="display:none">
-    <div class="loader-ring"></div><p>Running batch alignments…</p>
-  </div>
-</main>
+</div><!-- /app-shell -->
 
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<!--  TAB: CUSTOM                                                        -->
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<main id="tab-custom" class="tab">
-  <section class="hero">
-    <p class="overline">Manual Input</p>
-    <h1>Custom <span class="accent">Sequence Alignment</span></h1>
-    <p class="sub">Paste your own DNA sequences (max 500bp each) for ML-enhanced alignment.</p>
-  </section>
-  <div class="custom-form">
-    <div class="custom-seq-wrap">
-      <label>Sequence A</label>
-      <textarea id="custom-seq1" placeholder="ATCGATCGATCGATCG..." rows="4"></textarea>
-    </div>
-    <div class="custom-seq-wrap">
-      <label>Sequence B</label>
-      <textarea id="custom-seq2" placeholder="ATCGATCGATCGATCG..." rows="4"></textarea>
-    </div>
-    <div class="custom-btns">
-      <button class="run-btn" onclick="runCustom()">▶ Align Sequences</button>
-      <button class="sec-btn" onclick="loadExample()">Load Example</button>
-    </div>
-  </div>
-  <div id="custom-results" style="display:none"></div>
-  <div class="loading-overlay" id="custom-loading" style="display:none">
-    <div class="loader-ring"></div><p>Computing…</p>
-  </div>
-</main>
-
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<!--  TAB: DATASET                                                       -->
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<main id="tab-dataset" class="tab">
-  <section class="hero">
-    <p class="overline">Data Explorer</p>
-    <h1>Dataset <span class="accent">Overview</span></h1>
-    <p class="sub">Loaded from <code>raw_dataset.fasta</code> — sequence lengths, GC content, and metadata.</p>
-  </section>
-  <div id="dataset-panel" class="dataset-panel"></div>
-</main>
-
-<!-- ─────────────────────────────────────── -->
-<script>
-/* ─── State ─────────────────────────────────────────────────── */
-let SEQUENCES = [];
-let LAST_DATA = null;
-let CUR_ALN   = 'ml';
-
-/* ─── Init ──────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', async () => {
-  await fetchSequences();
-  populateSelects();
-  setupCanvas();
-  fetchDatasetStats();
-  document.getElementById('seg-len').addEventListener('input', e => {
-    document.getElementById('seg-len-val').textContent = e.target.value + ' bp';
-  });
-});
-
-async function fetchSequences() {
-  const res  = await fetch('/api/sequences');
-  const data = await res.json();
-  SEQUENCES  = data.sequences;
-  document.getElementById('dataset-pill').textContent =
-    `${data.total} sequences loaded`;
-}
-
-function populateSelects() {
-  ['sel1','sel2'].forEach((id, ii) => {
-    const sel = document.getElementById(id);
-    sel.innerHTML = '';
-    SEQUENCES.forEach((s, i) => {
-      const opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = `${s.id} (${(s.length/1e6).toFixed(1)} Mbp · GC ${s.gc}%)`;
-      if (i === ii) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  });
-}
-
-/* ─── Tab switching ─────────────────────────────────────────── */
-function showTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  event.target.classList.add('active');
-}
-
-/* ─── Alignment ─────────────────────────────────────────────── */
-async function runAlignment() {
-  const idx1 = +document.getElementById('sel1').value;
-  const idx2 = +document.getElementById('sel2').value;
-  const len  = +document.getElementById('seg-len').value;
-
-  if (idx1 === idx2) { alert('Please select two different sequences.'); return; }
-
-  show('loading'); hide('results-area');
-  const btn = document.getElementById('run-btn');
-  btn.disabled = true;
-
-  try {
-    const res  = await fetch('/api/align', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({idx1, idx2, length: len})
-    });
-    const d = await res.json();
-    LAST_DATA = d;
-    renderResults(d);
-    show('results-area');
-  } catch(e) {
-    alert('Error: ' + e.message);
-  } finally {
-    hide('loading');
-    btn.disabled = false;
-  }
-}
-
-function renderResults(d) {
-  // Scores
-  animateNumber('c-score',   d.classic.score);
-  animateNumber('ml-score',  d.ml_optimised.score);
-  animateNumber('aff-score', d.affine.score);
-  document.getElementById('c-time').textContent  = `${d.classic.time_ms} ms`;
-  document.getElementById('ml-time').textContent = `${d.ml_optimised.time_ms} ms`;
-
-  const imp = d.improvement_pct;
-  document.getElementById('improv').textContent = (imp >= 0 ? '+' : '') + imp + '%';
-  const bar = document.getElementById('improv-bar');
-  const pct = Math.min(Math.abs(imp), 100);
-  bar.style.width = pct + '%';
-  bar.style.background = imp >= 0 ? 'var(--accent)' : '#ff4d6d';
-
-  // ML params
-  const p = d.ml_optimised.params;
-  document.getElementById('ml-params').textContent =
-    `match=${p.match}  mismatch=${p.mismatch}  gap=${p.gap}`;
-
-  // Seq info
-  seqInfoCard('seq1-info', d.seq1);
-  seqInfoCard('seq2-info', d.seq2);
-
-  // Stats
-  renderStatBars('c-stats',  d.classic.stats);
-  renderStatBars('ml-stats', d.ml_optimised.stats);
-
-  // ML insights
-  renderInsights(d);
-
-  // Alignment display
-  switchAln(CUR_ALN);
-}
-
-function seqInfoCard(id, s) {
-  document.getElementById(id).innerHTML = `
-    <div class="sic-id">${s.id}</div>
-    <div class="sic-desc">${s.desc || ''}</div>
-    <div class="sic-meta">Length: <strong>${s.length} bp</strong></div>
-    <div class="sic-preview">${s.segment || ''}</div>`;
-}
-
-function renderStatBars(id, st) {
-  const total = st.length || 1;
-  document.getElementById(id).innerHTML = `
-    ${bar('Identity',   st.identity,  100, 'var(--accent)')}
-    ${bar('Matches',    st.matches,   total, '#00e5a0')}
-    ${bar('Mismatches', st.mismatches,total, '#ff9f43')}
-    ${bar('Gaps',       st.gaps,      total, '#ff4d6d')}
-    <div class="stat-pair"><span>Gap openings</span><strong>${st.gap_opens}</strong></div>
-    <div class="stat-pair"><span>Alignment length</span><strong>${st.length} bp</strong></div>
-    <div class="stat-pair"><span>Similarity</span><strong>${st.similarity}%</strong></div>`;
-}
-
-function bar(label, val, max, color) {
-  const pct = Math.min(val / max * 100, 100);
-  return `<div class="stat-bar-row">
-    <span class="sb-label">${label}</span>
-    <div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${color}"></div></div>
-    <span class="sb-val">${typeof val === 'number' && val < 100 && label !== 'Matches' && label !== 'Mismatches' && label !== 'Gaps' ? val+'%' : val}</span>
-  </div>`;
-}
-
-function renderInsights(d) {
-  const ml = d.ml_optimised;
-  document.getElementById('insight-grid').innerHTML = `
-    <div class="insight-item">
-      <div class="ii-icon">⊕</div>
-      <div class="ii-label">GC Content</div>
-      <div class="ii-val">${ml.gc_pct}%</div>
-      <div class="ii-note">${ml.gc_pct > 60 ? 'GC-rich → strict gap penalty' : ml.gc_pct > 45 ? 'Balanced composition' : 'AT-rich → lenient mismatch'}</div>
-    </div>
-    <div class="insight-item">
-      <div class="ii-icon">∿</div>
-      <div class="ii-label">Shannon Entropy</div>
-      <div class="ii-val">${ml.entropy}</div>
-      <div class="ii-note">${ml.entropy < 1.5 ? 'Low complexity detected' : 'High sequence complexity'}</div>
-    </div>
-    <div class="insight-item">
-      <div class="ii-icon">◈</div>
-      <div class="ii-label">Match Weight</div>
-      <div class="ii-val">+${ml.params.match}</div>
-      <div class="ii-note">Reward per matched base</div>
-    </div>
-    <div class="insight-item">
-      <div class="ii-icon">⊖</div>
-      <div class="ii-label">Gap Penalty</div>
-      <div class="ii-val">${ml.params.gap}</div>
-      <div class="ii-note">Derived from GC + entropy</div>
-    </div>
-    <div class="insight-item">
-      <div class="ii-icon">↑</div>
-      <div class="ii-label">Score Gain</div>
-      <div class="ii-val">${d.ml_optimised.score - d.classic.score}</div>
-      <div class="ii-note">ML vs Classic raw delta</div>
-    </div>
-    <div class="insight-item">
-      <div class="ii-icon">⊞</div>
-      <div class="ii-label">Affine Advantage</div>
-      <div class="ii-val">${d.affine.score - d.classic.score}</div>
-      <div class="ii-note">Biological gap modelling</div>
-    </div>`;
-}
-
-/* ─── Alignment display ─────────────────────────────────────── */
-function switchAln(mode) {
-  CUR_ALN = mode;
-  document.querySelectorAll('.aln-tab').forEach((b,i) =>
-    b.classList.toggle('active', (i === 0 && mode === 'ml') || (i === 1 && mode === 'classic'))
-  );
-  if (!LAST_DATA) return;
-  const d = mode === 'ml' ? LAST_DATA.ml_optimised : LAST_DATA.classic;
-  renderAlnDisplay(d.aligned1, d.aligned2, d.ops, LAST_DATA.seq1.id, LAST_DATA.seq2.id);
-}
-
-function renderAlnDisplay(a1, a2, ops, id1, id2) {
-  const CHUNK = 60;
-  let html = '';
-  for (let start = 0; start < a1.length; start += CHUNK) {
-    const s1 = a1.slice(start, start + CHUNK);
-    const s2 = a2.slice(start, start + CHUNK);
-    const op = ops.slice(start, start + CHUNK);
-    html += `<div class="aln-block">
-      <div class="aln-id">${id1.slice(0,12)}</div><div class="aln-seq">${colorSeq(s1, op, 'seq1')}</div>
-      <div class="aln-id">&nbsp;</div><div class="aln-op">${op.replace(/ /g,'·')}</div>
-      <div class="aln-id">${id2.slice(0,12)}</div><div class="aln-seq">${colorSeq(s2, op, 'seq2')}</div>
-      <div class="aln-pos">${start+1}–${start+s1.length}</div>
-    </div>`;
-  }
-  document.getElementById('aln-display').innerHTML = html;
-}
-
-function colorSeq(seq, ops, which) {
-  return [...seq].map((c, i) => {
-    const op = ops[i];
-    let cls = '';
-    if (c === '-') cls = 'gap';
-    else if (op === '|') cls = 'match';
-    else cls = 'mismatch';
-    return `<span class="${cls}">${c}</span>`;
-  }).join('');
-}
-
-/* ─── Batch ─────────────────────────────────────────────────── */
-async function runBatch() {
-  show('batch-loading'); hide('batch-results');
-  const res  = await fetch('/api/batch');
-  const data = await res.json();
-  hide('batch-loading');
-
-  let rows = data.results.map(r => `
-    <tr>
-      <td>${r.seq1.slice(0,14)}</td>
-      <td>${r.seq2.slice(0,14)}</td>
-      <td class="num">${r.classic}</td>
-      <td class="num accent">${r.ml_optimised}</td>
-      <td class="num">${r.affine}</td>
-      <td class="num">${r.identity}%</td>
-      <td class="num">${r.length} bp</td>
-    </tr>`).join('');
-
-  document.getElementById('batch-results').innerHTML = `
-    <table class="batch-table">
-      <thead><tr><th>Seq 1</th><th>Seq 2</th><th>Classic</th><th>ML-Enhanced</th><th>Affine</th><th>Identity</th><th>Length</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-  show('batch-results');
-}
-
-/* ─── Custom ────────────────────────────────────────────────── */
-async function runCustom() {
-  const seq1 = document.getElementById('custom-seq1').value.trim();
-  const seq2 = document.getElementById('custom-seq2').value.trim();
-  if (!seq1 || !seq2) { alert('Please enter both sequences.'); return; }
-
-  show('custom-loading'); hide('custom-results');
-  const res  = await fetch('/api/align_custom', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({seq1, seq2})
-  });
-  const d = await res.json();
-  hide('custom-loading');
-
-  const imp = d.improvement_pct;
-  document.getElementById('custom-results').innerHTML = `
-    <div class="score-row">
-      <div class="score-card classic"><div class="sc-label">Classic NW</div><div class="sc-score">${d.classic.score}</div><div class="sc-sub">match=1  mm=−1  gap=−2</div></div>
-      <div class="score-card ml"><div class="sc-badge">AI OPTIMISED</div><div class="sc-label">ML-Enhanced</div><div class="sc-score accent">${d.ml_optimised.score}</div><div class="sc-sub">match=${d.ml_optimised.params.match}  mm=${d.ml_optimised.params.mismatch}  gap=${d.ml_optimised.params.gap}</div></div>
-      <div class="score-card affine"><div class="sc-label">Affine-Gap</div><div class="sc-score">${d.affine.score}</div></div>
-      <div class="score-card improvement-card"><div class="sc-label">Improvement</div><div class="sc-score accent">${(imp>=0?'+':'')+imp}%</div><div class="improv-bar-wrap"><div class="improv-bar" style="width:${Math.min(Math.abs(imp),100)}%;background:${imp>=0?'var(--accent)':'#ff4d6d'}"></div></div></div>
-    </div>
-    <div class="alignment-viewer" style="margin-top:32px">
-      <div class="panel-title">Alignment Result</div>
-      <div class="aln-legend"><span class="leg-match">█ Match</span><span class="leg-mm">█ Mismatch</span><span class="leg-gap">█ Gap</span></div>
-      <div class="aln-display" id="custom-aln-display"></div>
-    </div>`;
-  show('custom-results');
-
-  renderAlnCustom(d.ml_optimised.aligned1, d.ml_optimised.aligned2, d.ml_optimised.ops, 'Custom-A', 'Custom-B');
-}
-
-function renderAlnCustom(a1, a2, ops, id1, id2) {
-  const CHUNK = 60;
-  let html = '';
-  for (let start = 0; start < a1.length; start += CHUNK) {
-    const s1 = a1.slice(start, start+CHUNK);
-    const s2 = a2.slice(start, start+CHUNK);
-    const op = ops.slice(start, start+CHUNK);
-    html += `<div class="aln-block">
-      <div class="aln-id">${id1}</div><div class="aln-seq">${colorSeq(s1,op,'seq1')}</div>
-      <div class="aln-id">&nbsp;</div><div class="aln-op">${op.replace(/ /g,'·')}</div>
-      <div class="aln-id">${id2}</div><div class="aln-seq">${colorSeq(s2,op,'seq2')}</div>
-    </div>`;
-  }
-  document.getElementById('custom-aln-display').innerHTML = html;
-}
-
-function loadExample() {
-  document.getElementById('custom-seq1').value = 'ATCGATCGTAGCATCGATCGATCGTAGCATCGATCGATCGTAGCATCGATCG';
-  document.getElementById('custom-seq2').value = 'ATCGATCGTAGCATCGATCGATCGTAGCATCGATCGATCG-AGCATCGATCG'.replace('-','T');
-}
-
-/* ─── Dataset stats ─────────────────────────────────────────── */
-async function fetchDatasetStats() {
-  const res  = await fetch('/api/stats');
-  const d    = await res.json();
-  if (d.error) return;
-
-  const panel = document.getElementById('dataset-panel');
-  panel.innerHTML = `
-    <div class="ds-kpi-row">
-      ${kpi('Sequences', d.total_sequences)}
-      ${kpi('Total Basepairs', (d.total_bp/1e6).toFixed(1)+'M')}
-      ${kpi('Avg Length', (d.avg_length/1e6).toFixed(2)+' Mbp')}
-      ${kpi('Avg GC Content', d.avg_gc+'%')}
-    </div>
-    <div class="ds-seq-list">
-      <div class="panel-title">Sequences in Dataset</div>
-      <div class="ds-seq-grid" id="ds-seq-grid"></div>
-    </div>`;
-
-  const grid = document.getElementById('ds-seq-grid');
-  d.sequence_ids.forEach((sid, i) => {
-    const len  = d.lengths[i];
-    const gc   = d.gc_vals[i];
-    const gcW  = gc;
-    grid.innerHTML += `
-      <div class="ds-seq-row">
-        <div class="ds-seq-id">${sid}</div>
-        <div class="ds-seq-meta">${(len/1e6).toFixed(2)} Mbp</div>
-        <div class="ds-gc-bar"><div class="ds-gc-fill" style="width:${gcW}%"></div></div>
-        <div class="ds-seq-meta">GC ${gc}%</div>
-      </div>`;
-  });
-}
-
-function kpi(label, val) {
-  return `<div class="kpi-card"><div class="kpi-val">${val}</div><div class="kpi-label">${label}</div></div>`;
-}
-
-/* ─── Utilities ─────────────────────────────────────────────── */
-function show(id) { document.getElementById(id).style.display = ''; }
-function hide(id) { const el=document.getElementById(id); if(el) el.style.display='none'; }
-
-function animateNumber(id, target) {
-  const el = document.getElementById(id);
-  const start = 0;
-  const duration = 600;
-  const step = t => {
-    const val = Math.round(start + (target - start) * t);
-    el.textContent = val.toLocaleString();
-  };
-  let s;
-  const animate = ts => {
-    if (!s) s = ts;
-    const progress = Math.min((ts - s) / duration, 1);
-    step(progress);
-    if (progress < 1) requestAnimationFrame(animate);
-  };
-  requestAnimationFrame(animate);
-}
-
-/* ─── Background Canvas ─────────────────────────────────────── */
-function setupCanvas() {
-  const canvas = document.getElementById('bg-canvas');
-  const ctx = canvas.getContext('2d');
-  let W, H, particles = [];
-
-  function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  const BASES = ['A','T','C','G'];
-  for (let i = 0; i < 60; i++) {
-    particles.push({
-      x: Math.random() * 1000,
-      y: Math.random() * 1000,
-      vy: 0.15 + Math.random() * 0.3,
-      vx: (Math.random() - 0.5) * 0.1,
-      char: BASES[Math.floor(Math.random() * 4)],
-      alpha: 0.05 + Math.random() * 0.12,
-      size: 10 + Math.random() * 8,
-    });
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    ctx.font = '13px "Space Mono", monospace';
-    for (const p of particles) {
-      ctx.globalAlpha = p.alpha;
-      ctx.fillStyle = '#00FFC8';
-      ctx.fillText(p.char, p.x % W, p.y % H);
-      p.y += p.vy;
-      p.x += p.vx;
-      if (p.y > H + 20) { p.y = -20; p.x = Math.random() * W; }
-    }
-    ctx.globalAlpha = 1;
-    requestAnimationFrame(draw);
-  }
-  draw();
-}
-</script>
+<script src="/static/js/neural.js"></script>
+<script src="/static/js/app.js"></script>
 </body>
 </html>
